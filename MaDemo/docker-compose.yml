@@ -59,7 +59,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - "${GRAFANA_PORT:-3005}:3000"
 
 volumes:
   mysql_data:
