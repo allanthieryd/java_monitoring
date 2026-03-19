@@ -202,12 +202,173 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "profil_created_total",
-          "legendFormat": "Profils crees",
+          "expr": "match_created_total",
+          "legendFormat": "Matchs crees",
+          "refId": "A"
+        },
+        {
+          "editorMode": "code",
+          "expr": "match_completed_total",
+          "legendFormat": "Matchs completes",
+          "refId": "B"
+        }
+      ],
+      "title": "Compteurs de matchs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "match_sessions{status=\"OPEN\"}",
           "refId": "A"
         }
       ],
-      "title": "Compteur de profils crees",
+      "title": "Parties en cours",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "match_sessions{status=~\"OPEN|COMPLETED|CANCELED\"}",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Etat des parties",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "rate(match_created_total[5m])",
+          "legendFormat": "Creation matchs/s",
+          "refId": "A"
+        },
+        {
+          "editorMode": "code",
+          "expr": "rate(match_completed_total[5m])",
+          "legendFormat": "Completion matchs/s",
+          "refId": "B"
+        }
+      ],
+      "title": "Flux des parties",
       "type": "timeseries"
     }
   ],
@@ -228,6 +389,6 @@
   "timezone": "",
   "title": "MaDemo Monitoring",
   "uid": "mademo-monitoring",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

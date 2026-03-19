@@ -25,6 +25,7 @@ public class MatchmakingService {
 
     private final MatchSessionRepository matchSessionRepository;
     private final ProfilRepository profilRepository;
+    private final Counter createdMatchesCounter;
     private final Counter completedMatchesCounter;
 
     public MatchmakingService(
@@ -33,6 +34,9 @@ public class MatchmakingService {
             MeterRegistry meterRegistry) {
         this.matchSessionRepository = matchSessionRepository;
         this.profilRepository = profilRepository;
+        this.createdMatchesCounter = Counter.builder("match_created_total")
+            .description("Nombre total de matchs crees")
+            .register(meterRegistry);
         this.completedMatchesCounter = Counter.builder("match_completed_total")
                 .description("Nombre total de matchs completes")
                 .register(meterRegistry);
@@ -52,7 +56,9 @@ public class MatchmakingService {
         match.setPlayerOneId(request.getPlayerOneId());
         match.setPlayerTwoId(request.getPlayerTwoId());
 
-        return toDto(matchSessionRepository.save(match));
+        MatchSession saved = matchSessionRepository.save(match);
+        createdMatchesCounter.increment();
+        return toDto(saved);
     }
 
     @Transactional
