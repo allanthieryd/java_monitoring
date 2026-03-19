@@ -29,6 +29,10 @@ public class ProfilService {
 
     @Transactional
     public ProfilDto createProfil(ProfilDto profilDto) {
+        profilRepository.findByEmail(profilDto.getEmail()).ifPresent(existing -> {
+            throw new IllegalArgumentException("Un profil avec cet email existe deja");
+        });
+
         Profil profil = DtoEntityUtil.toEntity(profilDto);
         Profil saved = profilRepository.save(profil);
         profilCreationCounter.increment();

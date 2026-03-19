@@ -42,11 +42,14 @@ class ProfilServiceTest {
         Profil savedProfil = new Profil();
         savedProfil.setId(1L);
         savedProfil.setName("Test Profil");
+        savedProfil.setEmail("test@example.com");
 
+        when(profilRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
         when(profilRepository.save(any(Profil.class))).thenReturn(savedProfil);
 
         ProfilDto dto = new ProfilDto();
         dto.setName("Test Profil");
+        dto.setEmail("test@example.com");
 
         ProfilDto result = profilService.createProfil(dto);
 

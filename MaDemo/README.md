@@ -1,20 +1,16 @@
-# MaDemo - Microservice backend monitorable
+# MaDemo - Plateforme backend complete
 
-Ce projet implemente un microservice Spring Boot oriente performance backend avec:
+Ce projet implemente une plateforme backend de tracking de jeu avec:
 
-- API REST securisee (Basic Auth)
-- Persistence MySQL
-- Metriques Micrometer exposees en Prometheus
-- Stack Docker Compose: App + MySQL + Prometheus + Grafana
-- Dashboard Grafana provisionne automatiquement
+- Gestion des profils joueurs (identite, points de classement, credits)
+- Matchmaking et cloture des matchs (mise a jour du rank)
+- Economie virtuelle (credit/debit + historique wallet)
+- Contenu communautaire UGC (creation, publication, archivage)
+- Moderation (signalements, resolution/rejet admin)
+- Leaderboard des meilleurs joueurs
+- Observabilite (Actuator, Micrometer, Prometheus, Grafana)
 
-## 1. Prerequis
-
-- Java 21+
-- Docker + Docker Compose
-- Maven Wrapper (inclus)
-
-## 2. Lancer avec Docker
+## 1. Lancement
 
 Depuis le dossier du projet:
 
@@ -22,72 +18,45 @@ Depuis le dossier du projet:
 docker compose up --build
 ```
 
-Services demarres:
+Services:
 
 - API: http://localhost:8081
 - Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000
+- Grafana: http://localhost:3005
 - MySQL: localhost:3307
 
-Comptes utiles:
+## 2. Comptes
 
-- API Basic Auth: allan / 7895
+- User API: allan / 7895
+- Admin API: admin / admin123
 - Grafana: admin / admin123
 
-## 3. Endpoints API
+## 3. Endpoints principaux
 
-Base URL: http://localhost:8081
+- Profils: /api/profils
+- Matchmaking: /api/matches
+- Economie: /api/economy
+- UGC: /api/ugc
+- Moderation: /api/moderation/reports
+- Leaderboard: /api/leaderboard/top
+- Monitoring: /actuator/health, /actuator/prometheus
 
-- POST /api/profils
-- GET /api/profils
-- GET /api/profils/{id}
-- DELETE /api/profils/{id}
+## 4. Collection Postman
 
-Exemple creation:
+Collection prete a importer:
 
-```bash
-curl -u allan:7895 -X POST http://localhost:8081/api/profils \
-  -H "Content-Type: application/json" \
-  -d '{"name":"PlayerOne"}'
-```
+- postman/MaDemo-Platform.postman_collection.json
 
-## 4. Endpoints observabilite
+Variables deja configurees dans la collection:
 
-- Health: http://localhost:8081/actuator/health
-- Prometheus: http://localhost:8081/actuator/prometheus
-- Metrics: http://localhost:8081/actuator/metrics
+- baseUrl = http://localhost:8081
+- username/password = allan/7895
+- adminUsername/adminPassword = admin/admin123
 
-Metriques metier ajoutees:
-
-- profil_created_total
-- api.profil.create (timer)
-- api.profil.get (timer)
-- api.profil.list (timer)
-- api.profil.delete (timer)
-
-## 5. Dashboard Grafana
-
-Le dashboard est provisionne automatiquement au demarrage:
-
-- Nom: MaDemo Monitoring
-- Panels: debit API, latence p95, erreurs 5xx, compteur profils crees
-
-## 6. Test local sans Docker
-
-Configurer une base MySQL locale puis lancer:
-
-```bash
-sh mvnw spring-boot:run
-```
-
-Page de test simple:
-
-- http://localhost:8080/profil.html
-
-## 7. Tests
+## 5. Tests
 
 ```bash
 sh mvnw test
 ```
 
-Les tests utilisent un profil test avec H2 en memoire.
+Les tests utilisent H2 en memoire avec le profil test.

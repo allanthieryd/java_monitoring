@@ -14,6 +14,7 @@
 </p>
 
 <input type="text" id="name" placeholder="Nom du profil" />
+<input type="email" id="email" placeholder="Email du profil" />
 <button onclick="createProfil()">Créer</button>
 <button onclick="listProfils()">Lister</button>
 
@@ -33,12 +34,14 @@
     function createProfil() {
 
         const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
 
         fetch("/api/profils", {
             method: "POST",
             headers: authHeaders(),
             body: JSON.stringify({
-                name: name
+                name: name,
+                email: email
             })
         })
         .then(response => response.json())
