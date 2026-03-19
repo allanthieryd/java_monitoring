@@ -2,27 +2,41 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Création Profil</title>
+    <title>Gestion Profil</title>
 </head>
 <body>
 
-<h1>Créer un profil</h1>
+<h1>API Profils</h1>
+
+<p>
+    Utilisateur: <input type="text" id="username" value="allan" />
+    Mot de passe: <input type="password" id="password" value="7895" />
+</p>
 
 <input type="text" id="name" placeholder="Nom du profil" />
 <button onclick="createProfil()">Créer</button>
+<button onclick="listProfils()">Lister</button>
 
 <p id="result"></p>
+<ul id="list"></ul>
 
 <script>
+    function authHeaders() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        return {
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + btoa(username + ":" + password)
+        };
+    }
+
     function createProfil() {
 
         const name = document.getElementById("name").value;
 
         fetch("/api/profils", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: authHeaders(),
             body: JSON.stringify({
                 name: name
             })
@@ -42,3 +56,31 @@
 
 </body>
 </html>
+
+
+    function listProfils() {
+        fetch("/api/profils", {
+            method: "GET",
+            headers: authHeaders()
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const list = document.getElementById("list");
+            list.innerHTML = "";
+            data.forEach(item => {
+                const li = document.createElement("li");
+                li.innerText = item.id + " - " + item.name;
+                list.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            document.getElementById("result").innerText =
+                "Erreur lors du chargement des profils";
+        });
+    }

@@ -15,7 +15,7 @@ public class Profil {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nom", nullable = false)
+	@Column(name = "nom", nullable = false, length = 100)
     private String name;
 
 	public Long getId() {

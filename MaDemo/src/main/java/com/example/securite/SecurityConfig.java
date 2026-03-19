@@ -18,19 +18,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // API REST → pas de session, pas de formulaire HTML
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                // On peut laisser des trucs publics si tu veux, ex:
-                // .requestMatchers("/profil.html").permitAll()
-                
-                // Tout ce qui commence par /api/ doit être authentifié
+                .requestMatchers("/actuator/**", "/profil.html", "/").permitAll()
                 .requestMatchers("/api/**").authenticated()
-
-                // Le reste : on peut autoriser tout
                 .anyRequest().permitAll()
             )
-            // Authentification HTTP Basic (dans les headers)
             .httpBasic(Customizer.withDefaults());
 
         return http.build();
