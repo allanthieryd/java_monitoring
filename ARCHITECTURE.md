@@ -165,6 +165,7 @@ En plus des métriques techniques Spring (latence HTTP, pool de connexions, JVM)
 | Tests unitaires services | JUnit 5 + Mockito | Logique métier isolée des I/O |
 | Tests de contrat contrôleurs | `@WebMvcTest` + `@MockBean` | Sérialisation JSON, codes HTTP, sécurité |
 | Test de démarrage | `@SpringBootTest` | Contexte Spring complet sur H2 |
+| Tests de charge | Apache JMeter | Latence et débit de la stack complète (MySQL réel) |
 
 ### H2 pour les tests
 
@@ -173,6 +174,24 @@ La base H2 in-memory (profil `test`) permet des tests rapides sans Docker. Les m
 ### `@WebMvcTest` + `@WithMockUser`
 
 `@WebMvcTest` ne charge que la couche web (pas de JPA, pas de MySQL). `@WithMockUser` injecte un utilisateur authentifié dans le SecurityContext pour tester les endpoints protégés sans passer par le flux JWT complet. `spring-security-test` est déclaré explicitement en `<scope>test</scope>` dans le `pom.xml` car Spring Boot ne le résout pas automatiquement avec `@WebMvcTest`.
+
+### JMeter conteneurisé plutôt que `jmeter-maven-plugin`
+
+JMeter tourne comme un service Docker Compose sous le profil `load-test`, et non comme un plugin Maven. Les tests JUnit valident la logique ; les tests de charge valident la **stack déployée** — application, pool Hikari, MySQL réel. Les rattacher au cycle Maven les ferait tourner contre un contexte de test H2, qui ne dit rien du comportement en charge. Le conteneur rejoint le réseau Compose et cible `app:8080` par son nom de service, donc il mesure exactement ce qui est déployé.
+
+Le conteneur sort en code non nul si une assertion échoue : il est utilisable tel quel comme étape de CI.
+
+### Le rate limiting face au test de charge
+
+`RateLimitFilter` plafonne à 100 req/min par IP. Un test de charge lancé depuis une seule machine mesurerait donc le rate limiter, pas l'API.
+
+La solution retenue ne modifie pas le code applicatif : chaque thread JMeter émet un `X-Forwarded-For` distinct, et `resolveClientIp()` lui attribue son propre bucket. C'est exactement le déploiement visé — N clients derrière un load balancer — et non un contournement artificiel. Un think time (~1 s) maintient chaque joueur simulé sous son budget de 100 req/min : **la charge se monte en ajoutant des threads, pas en accélérant chacun**.
+
+Le rate limiter n'est pas pour autant exclu du périmètre de test : un second plan (`mademo-ratelimit-test.jmx`) envoie 120 requêtes depuis une IP unique et **assertionne** 100 × `200` puis `429`. Les deux plans sont complémentaires — l'un mesure l'API en neutralisant la limite, l'autre prouve que la limite s'applique.
+
+### Un login par joueur
+
+Le JWT est valable 24h : un joueur réel se logue une fois. Le test reproduit ce comportement, pour une raison mesurée : `POST /auth/login` prend ~88 ms (BCrypt) contre 5–11 ms pour les endpoints API. Se reloguer à chaque itération ferait du hachage de mot de passe ~90 % du temps mesuré et masquerait la performance réelle de l'API.
 
 ---
 
@@ -186,3 +205,5 @@ La base H2 in-memory (profil `test`) permet des tests rapides sans Docker. Les m
 | Communication inter-services | Spring Events (in-process) | Apache Kafka (persistance, multi-consumers) |
 | Secret JWT | Propriété application | Variable d'environnement injectée par Vault / K8s Secret |
 | Logs | Console async | Fichiers rotatifs + agrégation (ELK / Loki) |
+| `GET /api/v1/profils` | Renvoie la table entière | Pagination (`Pageable`) — l'endpoint ralentit avec la volumétrie |
+| Tests de charge | Injecteur unique (Docker local) | JMeter distribué pour chercher le vrai point de rupture |

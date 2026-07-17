@@ -65,6 +65,26 @@ services:
     ports:
       - "${GRAFANA_PORT:-3005}:3000"
 
+  # Tests de charge JMeter.
+  # Sous le profil "load-test" : ne demarre pas avec `docker compose up`, il faut
+  # le lancer explicitement une fois la stack en place (cf. jmeter/README.md).
+  #   docker compose --profile load-test run --rm jmeter
+  jmeter:
+    build:
+      context: ./jmeter
+    image: mademo-jmeter
+    profiles: ["load-test"]
+    depends_on:
+      - app
+    environment:
+      PLAN: ${PLAN:-mademo-load-test.jmx}
+      # JMeter tape l'app par son nom de service sur le reseau Compose :
+      # le port 8080 est celui du conteneur, pas le 8081 publie sur l'hote.
+      TARGET_HOST: app
+      TARGET_PORT: 8080
+    volumes:
+      - ./jmeter:/jmeter
+
 volumes:
   mysql_data:
   prometheus_data:

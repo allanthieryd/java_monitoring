@@ -9,6 +9,7 @@ Backend Spring Boot simulant une plateforme de jeu compétitif : profils joueurs
 - Spring Security + JWT (authentification stateless)
 - Bucket4j (rate limiting)
 - Micrometer + Prometheus + Grafana (observabilité)
+- Apache JMeter (tests de charge)
 - Docker Compose (stack complète)
 
 ---
@@ -191,6 +192,8 @@ Dépassement → HTTP `429 Too Many Requests` :
 }
 ```
 
+Ce comportement est vérifié automatiquement par le plan JMeter `mademo-ratelimit-test.jmx` (cf. section 9).
+
 ---
 
 ## 6. Observabilité (Grafana)
@@ -232,7 +235,35 @@ Les tests tournent sur H2 en mémoire (profil `test`). Couverture :
 
 ---
 
-## 9. Variables d'environnement
+## 9. Tests de charge (JMeter)
+
+La stack doit tourner. Le service `jmeter` est sous le profil `load-test` : il ne démarre pas avec `docker compose up`, on le lance à la demande.
+
+```bash
+# Test de charge : 20 joueurs simultanés sur le parcours complet
+docker compose --profile load-test run --rm jmeter
+
+# Validation du rate limiting : prouve le 429 au-delà de 100 req/min
+PLAN=mademo-ratelimit-test.jmx docker compose --profile load-test run --rm jmeter
+
+# Charge plus élevée
+docker compose --profile load-test run --rm jmeter -Jthreads=50 -Jloops=20
+```
+
+Rapport HTML généré à chaque exécution :
+```bash
+open MaDemo/jmeter/results/mademo-load-test-*/html-report/index.html
+```
+
+Pendant un run, l'effet est visible en direct dans Grafana — c'est l'intérêt de brancher JMeter sur une stack déjà instrumentée.
+
+Résultats de référence (20 joueurs × 10 itérations, 1220 requêtes, 0 erreur) : latence moyenne de 5 à 11 ms sur les endpoints API, 88 ms sur `/auth/login` (coût de BCrypt).
+
+> Détail des scénarios, des paramètres et des choix de conception : [`MaDemo/jmeter/README.md`](MaDemo/jmeter/README.md).
+
+---
+
+## 10. Variables d'environnement
 
 Les valeurs par défaut fonctionnent pour un lancement local. En production, surcharger :
 
