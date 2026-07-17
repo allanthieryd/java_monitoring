@@ -20,7 +20,7 @@ import io.micrometer.core.annotation.Timed;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/profils")
+@RequestMapping("/api/v1/profils")
 @Validated
 public class ProfilController {
 

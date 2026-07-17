@@ -36,7 +36,7 @@
         const name = document.getElementById("name").value;
         const email = document.getElementById("email").value;
 
-        fetch("/api/profils", {
+        fetch("/api/v1/profils", {
             method: "POST",
             headers: authHeaders(),
             body: JSON.stringify({
@@ -62,7 +62,7 @@
 
 
     function listProfils() {
-        fetch("/api/profils", {
+        fetch("/api/v1/profils", {
             method: "GET",
             headers: authHeaders()
         })
