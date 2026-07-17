@@ -2,7 +2,9 @@ package com.example.service;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import com.example.event.UgcPublishedEvent;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.dto.UgcContentDto;
@@ -20,10 +22,14 @@ public class UgcService {
 
     private final UgcContentRepository ugcContentRepository;
     private final ProfilRepository profilRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public UgcService(UgcContentRepository ugcContentRepository, ProfilRepository profilRepository) {
+    public UgcService(UgcContentRepository ugcContentRepository,
+                      ProfilRepository profilRepository,
+                      ApplicationEventPublisher eventPublisher) {
         this.ugcContentRepository = ugcContentRepository;
         this.profilRepository = profilRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -55,7 +61,9 @@ public class UgcService {
     public UgcContentDto publish(Long id) {
         UgcContent content = findById(id);
         content.setStatus(ContentStatus.PUBLISHED);
-        return toDto(ugcContentRepository.save(content));
+        UgcContent saved = ugcContentRepository.save(content);
+        eventPublisher.publishEvent(new UgcPublishedEvent(this, saved.getId(), saved.getAuthorProfilId()));
+        return toDto(saved);
     }
 
     @Transactional

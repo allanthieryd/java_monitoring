@@ -2,10 +2,12 @@ package com.example.service;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.dto.ModerationReportDto;
+import com.example.event.ModerationReportCreatedEvent;
 import com.example.dto.ModerationReportRequest;
 import com.example.entity.ModerationReport;
 import com.example.entity.ReportStatus;
@@ -20,14 +22,17 @@ public class ModerationService {
     private final ModerationReportRepository moderationReportRepository;
     private final UgcContentRepository ugcContentRepository;
     private final ProfilRepository profilRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ModerationService(
             ModerationReportRepository moderationReportRepository,
             UgcContentRepository ugcContentRepository,
-            ProfilRepository profilRepository) {
+            ProfilRepository profilRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.moderationReportRepository = moderationReportRepository;
         this.ugcContentRepository = ugcContentRepository;
         this.profilRepository = profilRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -45,7 +50,10 @@ public class ModerationService {
         report.setReason(request.getReason());
         report.setStatus(ReportStatus.OPEN);
 
-        return toDto(moderationReportRepository.save(report));
+        ModerationReport saved = moderationReportRepository.save(report);
+        eventPublisher.publishEvent(new ModerationReportCreatedEvent(
+                this, saved.getId(), saved.getContentId(), saved.getReporterProfilId()));
+        return toDto(saved);
     }
 
     @Transactional(readOnly = true)

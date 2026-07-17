@@ -3,10 +3,12 @@ package com.example.service;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.dto.WalletTransactionDto;
+import com.example.event.WalletTransactionEvent;
 import com.example.dto.WalletTransactionRequest;
 import com.example.entity.Profil;
 import com.example.entity.TransactionType;
@@ -22,10 +24,14 @@ public class EconomyService {
 
     private final WalletTransactionRepository walletTransactionRepository;
     private final ProfilRepository profilRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public EconomyService(WalletTransactionRepository walletTransactionRepository, ProfilRepository profilRepository) {
+    public EconomyService(WalletTransactionRepository walletTransactionRepository,
+                          ProfilRepository profilRepository,
+                          ApplicationEventPublisher eventPublisher) {
         this.walletTransactionRepository = walletTransactionRepository;
         this.profilRepository = profilRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -53,7 +59,10 @@ public class EconomyService {
         tx.setAmount(request.getAmount());
         tx.setReason(request.getReason());
 
-        return toDto(walletTransactionRepository.save(tx));
+        WalletTransaction saved = walletTransactionRepository.save(tx);
+        eventPublisher.publishEvent(new WalletTransactionEvent(
+                this, saved.getId(), saved.getProfilId(), saved.getType(), saved.getAmount()));
+        return toDto(saved);
     }
 
     @Transactional(readOnly = true)

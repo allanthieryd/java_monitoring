@@ -3,10 +3,13 @@ package com.example.service;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.dto.MatchCreateRequest;
+import com.example.event.MatchCompletedEvent;
+import com.example.event.MatchCreatedEvent;
 import com.example.dto.MatchDto;
 import com.example.dto.MatchResultRequest;
 import com.example.entity.MatchSession;
@@ -25,15 +28,18 @@ public class MatchmakingService {
 
     private final MatchSessionRepository matchSessionRepository;
     private final ProfilRepository profilRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final Counter createdMatchesCounter;
     private final Counter completedMatchesCounter;
 
     public MatchmakingService(
             MatchSessionRepository matchSessionRepository,
             ProfilRepository profilRepository,
+            ApplicationEventPublisher eventPublisher,
             MeterRegistry meterRegistry) {
         this.matchSessionRepository = matchSessionRepository;
         this.profilRepository = profilRepository;
+        this.eventPublisher = eventPublisher;
         this.createdMatchesCounter = Counter.builder("match_created_total")
             .description("Nombre total de matchs crees")
             .register(meterRegistry);
@@ -58,6 +64,7 @@ public class MatchmakingService {
 
         MatchSession saved = matchSessionRepository.save(match);
         createdMatchesCounter.increment();
+        eventPublisher.publishEvent(new MatchCreatedEvent(this, saved.getId(), saved.getPlayerOneId(), saved.getPlayerTwoId()));
         return toDto(saved);
     }
 
@@ -91,7 +98,9 @@ public class MatchmakingService {
         match.setEndedAt(Instant.now());
 
         completedMatchesCounter.increment();
-        return toDto(matchSessionRepository.save(match));
+        MatchSession completed = matchSessionRepository.save(match);
+        eventPublisher.publishEvent(new MatchCompletedEvent(this, completed.getId(), winnerId, loserId));
+        return toDto(completed);
     }
 
     @Transactional(readOnly = true)

@@ -12,4 +12,6 @@ public interface ModerationReportRepository extends JpaRepository<ModerationRepo
     List<ModerationReport> findTop100ByOrderByCreatedAtDesc();
 
     List<ModerationReport> findTop100ByStatusOrderByCreatedAtDesc(ReportStatus status);
+
+    long countByContentId(Long contentId);
 }
