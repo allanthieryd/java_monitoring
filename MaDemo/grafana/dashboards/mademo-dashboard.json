@@ -370,6 +370,71 @@
       ],
       "title": "Flux des parties",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 10 },
+              { "color": "red", "value": 25 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 32 },
+      "id": 8,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name" },
+      "targets": [{ "editorMode": "code", "expr": "match_abandonment_rate", "legendFormat": "Taux d'abandon", "refId": "A" }],
+      "title": "Taux d'abandon (%)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 50 },
+              { "color": "green", "value": 75 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 32 },
+      "id": 9,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name" },
+      "targets": [{ "editorMode": "code", "expr": "match_completion_rate", "legendFormat": "Taux de complétion", "refId": "A" }],
+      "title": "Taux de complétion (%)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 32 },
+      "id": 10,
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [
+        { "editorMode": "code", "expr": "match_duration_seconds{quantile=\"0.5\"}", "legendFormat": "p50", "refId": "A" },
+        { "editorMode": "code", "expr": "match_duration_seconds{quantile=\"0.95\"}", "legendFormat": "p95", "refId": "B" },
+        { "editorMode": "code", "expr": "match_duration_seconds{quantile=\"0.99\"}", "legendFormat": "p99", "refId": "C" }
+      ],
+      "title": "Durée des matchs (secondes)",
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 39,

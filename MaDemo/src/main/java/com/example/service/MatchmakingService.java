@@ -21,6 +21,7 @@ import com.example.repository.ProfilRepository;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
@@ -31,6 +32,8 @@ public class MatchmakingService {
     private final ApplicationEventPublisher eventPublisher;
     private final Counter createdMatchesCounter;
     private final Counter completedMatchesCounter;
+    /** Durée des matchs en secondes — indicateur d'expérience joueur */
+    private final DistributionSummary matchDurationSummary;
 
     public MatchmakingService(
             MatchSessionRepository matchSessionRepository,
@@ -45,6 +48,11 @@ public class MatchmakingService {
             .register(meterRegistry);
         this.completedMatchesCounter = Counter.builder("match_completed_total")
                 .description("Nombre total de matchs completes")
+                .register(meterRegistry);
+        this.matchDurationSummary = DistributionSummary.builder("match_duration_seconds")
+                .description("Duree des matchs en secondes (experience joueur)")
+                .baseUnit("seconds")
+                .publishPercentiles(0.5, 0.95, 0.99)
                 .register(meterRegistry);
     }
 
@@ -96,6 +104,9 @@ public class MatchmakingService {
         match.setWinnerId(winnerId);
         match.setStatus(MatchStatus.COMPLETED);
         match.setEndedAt(Instant.now());
+
+        long durationSeconds = java.time.Duration.between(match.getStartedAt(), Instant.now()).getSeconds();
+        matchDurationSummary.record(durationSeconds);
 
         completedMatchesCounter.increment();
         MatchSession completed = matchSessionRepository.save(match);

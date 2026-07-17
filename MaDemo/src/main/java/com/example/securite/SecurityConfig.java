@@ -1,5 +1,6 @@
 package com.example.securite;
 
+import com.example.filter.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -38,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/**").hasAnyRole("USER", "ADMIN")
                 .anyRequest().permitAll()
             )
+            .addFilterBefore(new RateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new JwtAuthFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

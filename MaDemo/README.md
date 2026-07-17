@@ -12,7 +12,7 @@ Ce projet implemente une plateforme backend de tracking de jeu avec:
 
 ## 1. Lancement
 
-Depuis le dossier du projet:
+Depuis le dossier `./MaDemo` du projet:
 
 ```bash
 docker compose up --build
