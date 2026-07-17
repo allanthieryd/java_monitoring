@@ -19,7 +19,7 @@ import com.example.service.MatchmakingService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/matches")
+@RequestMapping("/api/v1/matches")
 public class MatchController {
 
     private final MatchmakingService matchmakingService;

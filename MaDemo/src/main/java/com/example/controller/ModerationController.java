@@ -20,7 +20,7 @@ import com.example.service.ModerationService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/moderation/reports")
+@RequestMapping("/api/v1/moderation/reports")
 public class ModerationController {
 
     private final ModerationService moderationService;

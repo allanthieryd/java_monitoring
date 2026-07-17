@@ -20,7 +20,7 @@ import com.example.service.UgcService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/ugc")
+@RequestMapping("/api/v1/ugc")
 public class UgcController {
 
     private final UgcService ugcService;

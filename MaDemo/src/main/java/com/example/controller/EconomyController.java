@@ -18,7 +18,7 @@ import com.example.service.EconomyService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/economy")
+@RequestMapping("/api/v1/economy")
 public class EconomyController {
 
     private final EconomyService economyService;

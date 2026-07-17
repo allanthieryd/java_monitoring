@@ -10,7 +10,7 @@ import com.example.dto.LeaderboardEntryDto;
 import com.example.service.LeaderboardService;
 
 @RestController
-@RequestMapping("/api/leaderboard")
+@RequestMapping("/api/v1/leaderboard")
 public class LeaderboardController {
 
     private final LeaderboardService leaderboardService;
