@@ -1,19 +1,22 @@
 services:
   db:
-    image: mysql:8.4
-    container_name: mademo-db
+    image: 'mysql:8.4'
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: monitoring_nebula
       MYSQL_ROOT_PASSWORD: root
       MYSQL_ROOT_HOST: '%'
-    ports:
-      - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - 'mysql_data:/var/lib/mysql'
+      - './docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - '-h'
+        - localhost
+        - '-proot'
       interval: 10s
       timeout: 5s
       retries: 10
@@ -22,45 +25,47 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: mademo-app
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/monitoring_nebula?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: 'jdbc:mysql://db:3306/monitoring_nebula?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
+      # Remplace 8080 par le vrai port d'écoute de ton app Spring Boot.
+      # Coolify détecte cette variable magique, génère un sous-domaine
+      # et configure Traefik dessus automatiquement.
+      SERVICE_FQDN_APP: 8080
 
   prometheus:
-    image: prom/prometheus:v2.55.1
-    container_name: mademo-prometheus
+    image: 'prom/prometheus:v2.55.1'
     restart: unless-stopped
     depends_on:
       - app
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
+      - './prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro'
+      - 'prometheus_data:/prometheus'
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
 
   grafana:
-    image: grafana/grafana:11.2.2
-    container_name: mademo-grafana
+    image: 'grafana/grafana:11.2.2'
     restart: unless-stopped
     depends_on:
       - prometheus
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}
+      GF_SECURITY_ADMIN_USER: '${GRAFANA_ADMIN_USER:-admin}'
+      GF_SECURITY_ADMIN_PASSWORD: '${GRAFANA_ADMIN_PASSWORD}'
+      # Optionnel si tu veux un accès web direct à Grafana (via un domaine) :
+      # SERVICE_FQDN_GRAFANA: 3000
     volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - 'grafana_data:/var/lib/grafana'
+      - './grafana/provisioning:/etc/grafana/provisioning:ro'
+      - './grafana/dashboards:/var/lib/grafana/dashboards:ro'
 
 volumes:
-  mysql_data:
-  prometheus_data:
-  grafana_data:
+  mysql_data: null
+  prometheus_data: null
+  grafana_data: null
