@@ -44,7 +44,7 @@ services:
     depends_on:
       - app
     volumes:
-      - './prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro'
+      - './MaDemo/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro'
       - 'prometheus_data:/prometheus'
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -61,8 +61,8 @@ services:
       SERVICE_FQDN_GRAFANA: 3000
     volumes:
       - 'grafana_data:/var/lib/grafana'
-      - './grafana/provisioning:/etc/grafana/provisioning:ro'
-      - './grafana/dashboards:/var/lib/grafana/dashboards:ro'
+      - './MaDemo/grafana/provisioning:/etc/grafana/provisioning:ro'
+      - './MaDemo/grafana/dashboards:/var/lib/grafana/dashboards:ro'
 
 volumes:
   mysql_data: null
