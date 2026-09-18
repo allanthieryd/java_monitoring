@@ -28,19 +28,40 @@ import java.util.concurrent.ConcurrentHashMap;
  * Implémentation : token bucket (Bucket4j) en mémoire locale.
  * Pour un déploiement multi-instances, remplacer le ConcurrentHashMap
  * par un backend distribué (Redis via bucket4j-redis).
+ *
+ * Les seuils sont pilotés par les propriétés {@code ratelimit.*} : les tests
+ * de charge k6 les relèvent (ou désactivent le filtre) pour mesurer
+ * l'application et non le rate limiter.
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
-    private static final int API_LIMIT_PER_MINUTE = 100;
-    private static final int AUTH_LIMIT_PER_MINUTE = 10;
+    public static final int DEFAULT_API_LIMIT_PER_MINUTE = 100;
+    public static final int DEFAULT_AUTH_LIMIT_PER_MINUTE = 10;
+
+    private final boolean enabled;
+    private final int apiLimitPerMinute;
+    private final int authLimitPerMinute;
 
     /** Un bucket par IP pour les endpoints API généraux */
     private final ConcurrentHashMap<String, Bucket> apiBuckets = new ConcurrentHashMap<>();
 
     /** Un bucket par IP pour les endpoints d'authentification */
     private final ConcurrentHashMap<String, Bucket> authBuckets = new ConcurrentHashMap<>();
+
+    public RateLimitFilter() {
+        this(true, DEFAULT_API_LIMIT_PER_MINUTE, DEFAULT_AUTH_LIMIT_PER_MINUTE);
+    }
+
+    public RateLimitFilter(boolean enabled, int apiLimitPerMinute, int authLimitPerMinute) {
+        this.enabled = enabled;
+        this.apiLimitPerMinute = apiLimitPerMinute;
+        this.authLimitPerMinute = authLimitPerMinute;
+        if (!enabled) {
+            log.warn("[RATE-LIMIT] Filtre désactivé (ratelimit.enabled=false) — à réserver aux tests de charge");
+        }
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -49,7 +70,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         // Ne rate-limite que les endpoints API
-        if (!uri.startsWith("/api/")) {
+        if (!enabled || !uri.startsWith("/api/")) {
             chain.doFilter(request, response);
             return;
         }
@@ -58,13 +79,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
         boolean isAuthEndpoint = uri.startsWith("/api/v1/auth/");
 
         Bucket bucket = isAuthEndpoint
-                ? authBuckets.computeIfAbsent(ip, k -> buildBucket(AUTH_LIMIT_PER_MINUTE))
-                : apiBuckets.computeIfAbsent(ip, k -> buildBucket(API_LIMIT_PER_MINUTE));
+                ? authBuckets.computeIfAbsent(ip, k -> buildBucket(authLimitPerMinute))
+                : apiBuckets.computeIfAbsent(ip, k -> buildBucket(apiLimitPerMinute));
 
         if (bucket.tryConsume(1)) {
             chain.doFilter(request, response);
         } else {
-            int limit = isAuthEndpoint ? AUTH_LIMIT_PER_MINUTE : API_LIMIT_PER_MINUTE;
+            int limit = isAuthEndpoint ? authLimitPerMinute : apiLimitPerMinute;
             log.warn("[RATE-LIMIT] IP {} bloquée sur {} (limite : {}/min)", ip, uri, limit);
             response.setStatus(429);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);

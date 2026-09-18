@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -21,7 +22,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.controller.AuthController;
 import com.example.securite.JwtUtil;
 
+// @WebMvcTest ne charge pas SecurityConfig : sans cela, la chaine de securite
+// par defaut de Boot protegerait /api/v1/auth/login, alors qu'elle est en
+// permitAll en production. On teste donc le controleur sans filtres.
 @WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
     @Autowired

@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -72,6 +73,7 @@ class ProfilControllerTest {
         when(profilService.createProfil(any())).thenReturn(created);
 
         mockMvc.perform(post("/api/v1/profils")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Bob\",\"email\":\"bob@test.fr\"}"))
                 .andExpect(status().isCreated())
@@ -82,6 +84,7 @@ class ProfilControllerTest {
     @WithMockUser(roles = "USER")
     void createProfil_shouldReturn400_whenBodyInvalid() throws Exception {
         mockMvc.perform(post("/api/v1/profils")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\",\"email\":\"not-an-email\"}"))
                 .andExpect(status().isBadRequest());
@@ -90,7 +93,7 @@ class ProfilControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void deleteProfil_shouldReturn204() throws Exception {
-        mockMvc.perform(delete("/api/v1/profils/1"))
+        mockMvc.perform(delete("/api/v1/profils/1").with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
@@ -100,7 +103,7 @@ class ProfilControllerTest {
         doThrow(new ResourceNotFoundException("Profil introuvable avec id 99"))
                 .when(profilService).deleteProfil(eq(99L));
 
-        mockMvc.perform(delete("/api/v1/profils/99"))
+        mockMvc.perform(delete("/api/v1/profils/99").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 

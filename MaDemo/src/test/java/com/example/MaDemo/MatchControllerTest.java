@@ -3,6 +3,7 @@ package com.example.MaDemo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -42,6 +43,7 @@ class MatchControllerTest {
         when(matchmakingService.createMatch(any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/v1/matches")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"playerOneId\":1,\"playerTwoId\":2}"))
                 .andExpect(status().isCreated())
@@ -55,6 +57,7 @@ class MatchControllerTest {
                 .thenThrow(new IllegalArgumentException("Un joueur ne peut pas jouer contre lui-meme"));
 
         mockMvc.perform(post("/api/v1/matches")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"playerOneId\":1,\"playerTwoId\":1}"))
                 .andExpect(status().isBadRequest());
@@ -98,6 +101,7 @@ class MatchControllerTest {
         when(matchmakingService.completeMatch(eq(1L), any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/v1/matches/1/complete")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"winnerId\":1}"))
                 .andExpect(status().isOk())
@@ -108,6 +112,7 @@ class MatchControllerTest {
     @Test
     void createMatch_shouldReturn401_whenNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/v1/matches")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"playerOneId\":1,\"playerTwoId\":2}"))
                 .andExpect(status().isUnauthorized());
