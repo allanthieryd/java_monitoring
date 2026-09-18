@@ -159,11 +159,19 @@ export function health() {
     return res;
 }
 
+/**
+ * Attention aux noms : le client Prometheus retire les suffixes reserves
+ * (_total, _created, _count, _sum...) avant de reexposer la metrique.
+ * Le compteur declare `match_created_total` dans MatchmakingService ressort
+ * donc sous le nom `match_total` — ce sont bien les noms exposes qu'on
+ * verifie ici, pas ceux du code Java.
+ */
 export function prometheusScrape() {
     const res = http.get(`${BASE_URL}/actuator/prometheus`, { tags: { name: 'GET /actuator/prometheus' } });
     check(res, {
         'prometheus -> 200': (r) => r.status === 200,
-        'expose match_created_total': (r) => r.body.indexOf('match_created_total') !== -1,
+        'expose match_total': (r) => r.body.indexOf('match_total') !== -1,
+        'expose match_completed_total': (r) => r.body.indexOf('match_completed_total') !== -1,
     });
     return res;
 }

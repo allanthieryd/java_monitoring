@@ -41,6 +41,13 @@ export function headers(token) {
     return h;
 }
 
+/**
+ * Percentiles calcules pour le resume de fin de run.
+ * Sans p(99) explicite ici, k6 ne le remonte pas dans handleSummary et le
+ * resume affiche "n/a" meme quand un seuil porte dessus.
+ */
+export const TREND_STATS = ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'];
+
 /** Seuils communs : un run qui les depasse fait echouer la CI. */
 export const THRESHOLDS = {
     smoke: {

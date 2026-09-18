@@ -20,9 +20,13 @@ dans [`lib/config.js`](lib/config.js).
 
 ```bash
 # 1. Démarrer la stack (app + MySQL + Prometheus + Grafana)
-docker compose up -d --build
+#    RATELIMIT_ENABLED=false est indispensable pour load et stress, voir plus bas
+RATELIMIT_ENABLED=false docker compose up -d --build
 
-# 2. Jouer un scénario
+# 2. Créer le dossier de sortie — k6 ne le crée pas lui-même
+mkdir -p results
+
+# 3. Jouer un scénario
 k6 run k6/smoke.js
 k6 run k6/load.js
 k6 run --env VUS=30 --env DURATION=2m k6/load.js
@@ -30,6 +34,8 @@ k6 run --env VUS=30 --env DURATION=2m k6/load.js
 
 Chaque run écrit `results/<scénario>-summary.json` (données brutes k6) et
 `results/<scénario>-summary.md` (tableau repris dans le résumé du job GitHub).
+Sans le `mkdir`, le run se déroule normalement mais k6 termine sur une erreur
+`could not open 'results/...'` et n'écrit aucun résumé.
 
 ## Variables d'environnement
 
@@ -48,13 +54,16 @@ Chaque run écrit `results/<scénario>-summary.json` (données brutes k6) et
 
 `RateLimitFilter` autorise 100 req/min par IP cliente (10 sur `/api/v1/auth/**`).
 Sans précaution, un test de charge mesure donc le rate limiter et non
-l'application. Deux parades, combinables :
+l'application. Deux parades, à ne pas confondre :
 
-- **`SPOOF_CLIENT_IP=true`** (défaut) : chaque VU envoie un `X-Forwarded-For`
-  distinct et obtient son propre bucket. Fonctionne sans toucher à l'app —
-  c'est ce qui rend les scripts utilisables contre n'importe quel déploiement.
 - **`RATELIMIT_ENABLED=false`** côté application : désactive complètement le
-  filtre. C'est ce que fait la CI, pour des mesures non biaisées.
+  filtre. **Obligatoire pour `load.js` et `stress.js`** — c'est ce que fait la
+  CI. Sans cela, mesuré en local : 67 % de 429 dès 5 VUs.
+- **`SPOOF_CLIENT_IP=true`** (défaut) : chaque VU envoie un `X-Forwarded-For`
+  distinct et obtient son propre bucket. Cela répartit la charge sur N buckets
+  mais **ne supprime pas la limite** : un VU qui dépasse 100 req/min prend
+  quand même des 429. Suffisant pour `smoke.js` (23 requêtes au total),
+  insuffisant dès que le débit monte.
 
 Les seuils sont configurables via `ratelimit.enabled`,
 `ratelimit.api-per-minute` et `ratelimit.auth-per-minute`
@@ -64,6 +73,18 @@ Pour tester le rate limiter *lui-même*, lancer avec `SPOOF_CLIENT_IP=false`
 contre une application où le filtre est actif : les 429 attendus feront alors
 échouer le seuil `http_req_failed`, ce qui est le comportement voulu pour ce
 cas de figure — c'est un test à écrire à part, pas un scénario de charge.
+
+## Noms des métriques Prometheus
+
+Le client Prometheus retire les suffixes réservés (`_total`, `_created`,
+`_count`, `_sum`…) avant de réexposer une métrique. Le compteur déclaré
+`match_created_total` dans `MatchmakingService` est donc exposé sous le nom
+**`match_total`** : `_total` puis `_created` sont retirés, puis `_total` est
+rajouté à l'exposition.
+
+Les checks de `prometheusScrape()` portent sur les noms **exposés**, pas sur
+ceux du code Java. À vérifier avec `curl -s localhost:8080/actuator/prometheus`
+avant d'écrire une requête PromQL ou un panneau Grafana.
 
 ## Observer pendant le run
 

@@ -1,5 +1,5 @@
 import { group, sleep } from 'k6';
-import { THRESHOLDS } from './lib/config.js';
+import { THRESHOLDS, TREND_STATS } from './lib/config.js';
 import { makeSummary } from './lib/summary.js';
 import {
     seed,
@@ -44,6 +44,7 @@ export const options = {
         },
     },
     thresholds: THRESHOLDS.load,
+    summaryTrendStats: TREND_STATS,
 };
 
 export function setup() {

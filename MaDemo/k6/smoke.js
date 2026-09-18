@@ -1,5 +1,5 @@
 import { group, sleep } from 'k6';
-import { THRESHOLDS, USER, ADMIN } from './lib/config.js';
+import { THRESHOLDS, TREND_STATS, USER, ADMIN } from './lib/config.js';
 import { makeSummary } from './lib/summary.js';
 import {
     login,
@@ -35,6 +35,7 @@ export const options = {
     vus: 1,
     iterations: 1,
     thresholds: THRESHOLDS.smoke,
+    summaryTrendStats: TREND_STATS,
 };
 
 export default function () {
