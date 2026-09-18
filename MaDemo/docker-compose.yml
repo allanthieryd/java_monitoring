@@ -58,8 +58,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: '${GRAFANA_ADMIN_USER:-admin}'
       GF_SECURITY_ADMIN_PASSWORD: '${GRAFANA_ADMIN_PASSWORD}'
-      # Optionnel si tu veux un accès web direct à Grafana (via un domaine) :
-      # SERVICE_FQDN_GRAFANA: 3000
+      SERVICE_FQDN_GRAFANA: 3000
     volumes:
       - 'grafana_data:/var/lib/grafana'
       - './grafana/provisioning:/etc/grafana/provisioning:ro'
